@@ -1,17 +1,31 @@
 <?php
 
+namespace Zyxus;
+
+use \PDO;
+use \PDOStatement;
+use \PDOException;
+
 class DB
 {
     protected static $instance = null;
 
-    final private function __construct()
+    public static $DB_HOST;
+    public static $DB_NAME;
+    public static $DB_USER;
+    public static $DB_PASS;
+    public static $DB_SOCKET;
+    public static $DB_CHAR;
+
+//    final private function __construct()
+    public function __construct($host, $user, $pass, $db, $socket = '', $char = 'utf-8')
     {
-        define('DB_HOST', CONNECT_HOST);
-        define('DB_NAME', CONNECT_DB);
-        define('DB_USER', CONNECT_LOGIN);
-        define('DB_PASS', CONNECT_PASSWORD);
-        define('CONNECT_SOCKET', CONNECT_SOCKET);
-        define('DB_CHAR', 'cp1251');
+        self::$DB_HOST = $host;
+        self::$DB_NAME = $db;
+        self::$DB_USER = $user;
+        self::$DB_PASS = $pass;
+        self::$DB_SOCKET = $socket;
+        self::$DB_CHAR = $char;
     }
 
     final private function __clone()
@@ -26,18 +40,18 @@ class DB
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => TRUE,
-                PDO::ATTR_STATEMENT_CLASS => array('myPDOStatement'),
+//                PDO::ATTR_STATEMENT_CLASS => array('myPDOStatement'),
+                PDO::ATTR_STATEMENT_CLASS    => array('PDOStatement'),
 //                PDOExtended::ATTR_STRICT_MODE => false,
-//                PDO::ATTR_STATEMENT_CLASS    => array('PDOStatement'),
             );
-            if (defined(CONNECT_SOCKET) && CONNECT_SOCKET !="") {
-                $dsn = 'mysql:unix_socket=' . CONNECT_SOCKET . ';dbname=' . DB_NAME . ';charset=' . DB_CHAR;
+            if (isset(self::$DB_SOCKET) && self::$DB_SOCKET !="") {
+                $dsn = 'mysql:unix_socket=' . self::$DB_SOCKET . ';dbname=' . self::$DB_NAME . ';charset=' . self::$DB_CHAR;
             } else {
-                $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=' . DB_CHAR;
+                $dsn = 'mysql:host=' . self::$DB_HOST . ';dbname=' . self::$DB_NAME . ';charset=' . self::$DB_CHAR;
             }
 
-            self::$instance = new PDO($dsn, DB_USER, DB_PASS, $opt);
-            self::query('SET NAMES ' . DB_CHAR);
+            self::$instance = new PDO($dsn, self::$DB_USER, self::$DB_PASS, $opt);
+            self::query('SET NAMES ' . self::$DB_CHAR);
         }
         return self::$instance;
     }
