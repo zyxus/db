@@ -1,6 +1,6 @@
 <?php
 
-namespace Zyxus;
+namespace Zyxus\DB;
 
 use \PDO;
 use \PDOStatement;
