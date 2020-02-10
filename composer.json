@@ -25,11 +25,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Zyxus\\DB\\": "src"
+            "Zyxus\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
+            "Zyxus\\": "src"
         }
     },
     "minimum-stability": "dev"
