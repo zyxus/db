@@ -17,6 +17,14 @@ class DB
     public static $DB_SOCKET;
     public static $DB_CHAR;
 
+    protected static $table = 'table';
+    protected static $fields = [];
+    protected static $where = [];
+    protected static $whereRaw = [];
+    protected static $join = [];
+    protected static $order = [];
+    protected static $limit = '';
+
 //    final private function __construct()
     public function __construct($host, $user, $pass, $db, $socket = '', $char = 'utf-8')
     {
@@ -41,10 +49,10 @@ class DB
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => TRUE,
 //                PDO::ATTR_STATEMENT_CLASS => array('myPDOStatement'),
-                PDO::ATTR_STATEMENT_CLASS    => array('PDOStatement'),
+                PDO::ATTR_STATEMENT_CLASS => array('PDOStatement'),
 //                PDOExtended::ATTR_STRICT_MODE => false,
             );
-            if (isset(self::$DB_SOCKET) && self::$DB_SOCKET !="") {
+            if (isset(self::$DB_SOCKET) && self::$DB_SOCKET != "") {
                 $dsn = 'mysql:unix_socket=' . self::$DB_SOCKET . ';dbname=' . self::$DB_NAME . ';charset=' . self::$DB_CHAR;
             } else {
                 $dsn = 'mysql:host=' . self::$DB_HOST . ';dbname=' . self::$DB_NAME . ';charset=' . self::$DB_CHAR;
@@ -59,6 +67,142 @@ class DB
     public static function __callStatic($method, $args)
     {
         return self::instance()->$method($args);
+    }
+
+    public static function table($table)
+    {
+        self::$table = $table;
+        self::$fields = [];
+        self::$where = [];
+        self::$whereRaw = [];
+        self::$join = [];
+        self::$order = [];
+        self::$limit = '';
+
+        return new static();
+    }
+
+    public function fields($fields)
+    {
+        if (is_array($fields))
+            self::$fields = array_merge(self::$fields, $fields);
+        else
+            self::$fields = explode(', ', $fields);
+        return $this;
+    }
+
+    public function join($table, $field1, $field2, $condition = ' = ', $alias = '')
+    {
+        $condition = ($condition == null) ? ' = ' : $condition;
+        $alias = (!empty($alias)) ? ' AS ' . $alias : '';
+        self::$join[] = 'JOIN ' . $table . $alias . ' ON ' . $field1 . $condition . $field2;
+        return $this;
+    }
+
+    public function innerJoin($table, $field1, $field2, $condition = ' = ', $alias = '')
+    {
+        $condition = ($condition == null) ? ' = ' : $condition;
+        $alias = (!empty($alias)) ? ' AS ' . $alias : '';
+        self::$join[] = 'INNER JOIN ' . $table . $alias . ' ON ' . $field1 . $condition . $field2;
+        return $this;
+    }
+
+    public function where($field, $value, $condition = ' = ', $combine_condition = 'AND')
+    {
+        self::$where[$field] = [
+            'value' => $value,
+            'condition' => $condition,
+            'combine_condition' => $combine_condition,
+        ];
+        return $this;
+    }
+
+    public function whereRaw($where)
+    {
+        self::$whereRaw[] = ' AND ' . $where;
+        return $this;
+    }
+
+    public function andWhereRaw($where)
+    {
+        self::whereRaw($where);
+        return $this;
+    }
+
+    public function orWhereRaw($where)
+    {
+        self::$whereRaw[] = ' OR ' . $where;
+        return $this;
+    }
+
+    public function order($field, $direction = 'ASC')
+    {
+        self::$order[] = $field . ' ' . $direction;
+        return $this;
+    }
+
+    public function limit($limit, $from = '0')
+    {
+        $from = intval($from);
+        $from = intval($from);
+        self::$limit = 'LIMIT ' . $from . ', ' . $limit;
+        return $this;
+    }
+
+    public function exec()
+    {
+
+        $values = [];
+
+        $query[] = 'SELECT';
+        if (count(self::$fields))
+            $query[] = implode(',' . PHP_EOL, self::$fields);
+        else
+            $query[] = '*';
+        $query[] = 'FROM';
+        $query[] = self::$table;
+
+        if (count(self::$join))
+            $query[] = implode(',' . PHP_EOL, self::$join);
+
+        $query[] = 'WHERE 1';
+        if (count(self::$where)) {
+
+            $where = [];
+            foreach (self::$where as $field => $value) {
+
+                if (!empty($value)) {
+                    $field_placeholder = str_replace('.', '_', $field);
+                    $where[] = $value['combine_condition'] . ' ' . $field . ' ' . $value['condition'] . ' :' . $field_placeholder;
+                    $values[':' . $field_placeholder] = $value['value'];
+                } else {
+                    $where[] = $value['combine_condition'] . ' ' . $field . ' ' . $value['condition'] . ' \'\'';
+                }
+            }
+
+            $query[] = implode(' ', $where);
+        }
+
+        if (count(self::$whereRaw)) {
+            $query[] = implode(' ', self::$whereRaw);
+        }
+
+        if (count(self::$order)) {
+            $query[] = 'ORDER BY';
+            $query[] = implode(', ', self::$order);
+        }
+
+        if (!empty(self::$limit)) {
+            $query[] = self::$limit;
+        }
+
+        $query_final = implode(PHP_EOL, $query);
+
+//        echo '<pre>' . print_r($query, true) . '</pre>';
+//        echo '<pre>$query: ' . print_r($query_final, true) . '</pre>';
+//        echo '<pre>$values: ' . print_r($values, true) . '</pre>';
+
+        return self::query($query_final, $values)->fetchAll();
     }
 
     public static function query($query, $args = array())
