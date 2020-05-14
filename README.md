@@ -1,26 +1,9 @@
 [Конструктор](#конструктор-запросов)
 
-## Подключение
+## Установка
 ```
-require_once '{PATH_TO_DOCUMENT_ROOT}/functions/class_db.php';
+composer require zyxus/db
 ```
-### Переход со старого на новый код
-
-##### Вместо конструкций типа 
-```
-$query = "SELECT * FROM ta_manager WHERE id = " . mysql_real_escape_string($id) . " ORDER BY por, id";
-$result = mysql_query($query);
-while ($row = mysql_fetch_assoc($result)) {
-    $manager = $row;
-}
-```
-##### Используем следующий код
-```
-$query = "SELECT * FROM `ta_manager` WHERE `id` = :id ORDER BY por, id";
-$data = DB::query($query, [':id' => $id])->fetchAll();
-```
-
-...
 
 ## Использование
 #### Простой запрос
