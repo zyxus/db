@@ -12,10 +12,10 @@ $ composer require zyxus/db
 
 * [Использование](#Использование)
     * [::query()](#query)
-    * [rowCount()](#rowCount())
-    * [fetch()](#fetch())
-    * [fetchAll()](#fetchAll())
-    * [lastInsertId()](#lastInsertId())
+    * [rowCount()](#rowCount)
+    * [fetch()](#fetch)
+    * [fetchAll()](#fetchAll)
+    * [lastInsertId()](#lastInsertId)
 
 * [Подготовленные выражения (prepared statements)](#prepared-statements)
     * [Безымянные placeholder’ы (?)](#placeholder)
@@ -44,22 +44,22 @@ $ composer require zyxus/db
 ```php
 bool DB::query($query);
 ```
-### rowCount()
+### <a id="rowCount"></a>rowCount()
 Возвращает количество обработанных запросом строк
 ```php
 $count = DB::query($query)->rowCount();
 ```
-### fetch()
+### <a id="fetch"></a>fetch()
 Возвращает 1 строку с результатом запроса
 ```php
 $count = DB::query($query)->fetch();
 ```
-### fetchAll()
+### <a id="fetchAll"></a>fetchAll()
 Возвращает все строки с результатами запроса
 ```php
 $count = DB::query($query)->fetch();
 ```
-### lastInsertId()
+### <a id="lastInsertId"></a>lastInsertId()
 Возвращает последний вставленный запросом id 
 ```php
 $count = DB::instance()->lastInsertId();
