@@ -211,7 +211,7 @@ DB::query($query, $params);
 
 ### <a id="on_duplicate_key"></a>Синтаксис INSERT ON DUPLICATE KEY UPDATE
 
-```php
+```mysql
 INSERT INTO 
     `table` 
 SET 
