@@ -8,19 +8,26 @@
 $ composer require zyxus/db
 ```
 
-Конструктор запросов
+## Оглавление
 
-* Использование
+* [Использование](#Использование)
     * [::query()](#DB::query())
     * [rowCount()](#rowCount())
     * [fetch()](#fetch())
     * [fetchAll()](#fetchAll())
     * [lastInsertId()](#lastInsertId())
 
-* [Подготовленные выражения (prepared statements)](#Подготовленные-выражения-(prepared-statements))
+* [Подготовленные выражения (prepared statements)](#prepared-statements)
+    * [Безымянные placeholder’ы (?)](#placeholder)
+    * [Именные placeholder’ы (:placeholder_name)](#placeholder_name)
+    * [Выбор варианта возвращаемых индексов FETCH_STYLE](#fetch_style)
+    * [Проверка результатов запроса](#Проверка-результатов-запроса)
+    * [Вставка строки в таблицу INSERT](#insert)
+    * [Синтаксис INSERT ON DUPLICATE KEY UPDATE](#on_duplicate_key)
+     
 * [Конструктор запросов](#конструктор-запросов)
-    * [table](#table($table))
-    * [fields](#fields($fields))
+    * [table](#table)
+    * [fields](#fields)
     * [join](#join)
     * [innerJoin](#innerJoin)
     * [where](#where)
@@ -58,24 +65,24 @@ $count = DB::query($query)->fetch();
 $count = DB::instance()->lastInsertId();
 ```
 
-#### Подготовленные выражения (prepared statements)
+#### <a id="prepared-statements"></a>Подготовленные выражения (prepared statements)
 > Использование prepared statements укрепляет защиту от SQL-инъекций.
 
 Prepared statement — это заранее скомпилированное SQL-выражение, которое может быть многократно выполнено путем отправки серверу лишь различных наборов данных. Дополнительным преимуществом является невозможность провести SQL-инъекцию через данные, используемые в placeholder’ах.
 
-##### Безымянные placeholder’ы (?)
+##### <a id="placeholder"></a>Безымянные placeholder’ы (?)
 ```php
-$query = "SELECT `articul`, `name` FROM `ta_menu` WHERE `id` = ? AND `menu` = ?";
+$query = "SELECT `field1`, `field2` FROM `table` WHERE `id` = ? AND `field3` = ?";
 $params = [100, 'Y'];
 $data = DB::query($query, params)->fetch();
 ```
-##### Именные placeholder’ы (:placeholder_name)
+##### <a id="placeholder_name"></a>Именные placeholder’ы (:placeholder_name)
 
 ```php
-$query = "SELECT `articul`, `name` FROM `ta_menu` WHERE `id` = :id AND `menu` = :menu";
+$query = "SELECT `field1`, `field2` FROM `table` WHERE `id` = :id AND `field3` = :field3";
 $params = [
     ':id' => 100,
-    ':menu' => 'Y',
+    ':field3' => 'Y',
 ];
 $data = DB::query($query, params)->fetch();
 ```
@@ -107,7 +114,7 @@ $articul = DB::query($query, [':id' => 2797])->fetch(); // если не ука�
 $data = DB::query($query)->fetchAll();
 ```
 
-##### Выбор варианта возвращаемых индексов FETCH_STYLE
+##### <a id="fetch_style"></a>Выбор варианта возвращаемых индексов FETCH_STYLE
 
 Выборка ассоциативного массива данных
 
@@ -160,17 +167,17 @@ $data = DB::query($query)->fetchAll(PDO::FETCH_NUM);
 ]
 ```
 
-##### Проверка результатов выборки
+##### Проверка результатов запроса
 
 ```php
-$query = "SELECT `id`, `name` FROM `ta_menu` WHERE `id` = ?";
+$query = "SELECT `id`, `name` FROM `table` WHERE `id` = ?";
 if (!$array = DB::query($query, [$id])->fetchAll()) {
     echo "Нет записей";
 }
 ```
 
 ```php
-$query = "SELECT `name` FROM `ta_menu` WHERE `articul` = ?";
+$query = "SELECT `name` FROM `table` WHERE `id` = ?";
 $result = DB::query($query, [$articul]);
 
 if ($result->rowCount() > 0) {
@@ -184,76 +191,68 @@ if ($result->rowCount() > 0) {
 }
 ```
 
-
-#### Вставка строки в таблицу INSERT
+#### <a id="insert"></a>Вставка строки в таблицу INSERT
 
 ```php
 $query = "
-    INSERT INTO `ta_menu` (
+    INSERT INTO `table` (
         `id`,
-        `menu_name`
+        `title`
     ) VALUES (
         NULL,
-        :menu_name
+        :title
     );
 ";
 $params = array(
-    ':menu_name' => $menu_name,
+    ':title' => $title,
 );
 DB::query($query, $params);
 ```
 
-##### Синтаксис INSERT ON DUPLICATE KEY UPDATE
+##### <a id="on_duplicate_key"></a>Синтаксис INSERT ON DUPLICATE KEY UPDATE
 
 ```php
 INSERT INTO 
-    `ta_cart` 
+    `table` 
 SET 
-    `signature` = :signature, 
-    `cart` = :cart 
+    `field1` = :field1, 
+    `field2` = :field2 
 ON DUPLICATE KEY UPDATE 
-    `cart` = VALUES(`cart`)
-```
-
-#### Получение последнего вставленного в таблицу индекса LAST_INSERT_ID
-```php
-$lid = DB::instance()->lastInsertId();
+    `field2` = VALUES(`field2`)
 ```
 
 ## Конструктор запросов
-
 #### Пример
-
 ```php
-$menu = DB::table('ta_menu')
-    ->fields('ta_menu.id, ta_menu.articul, ta_menu.name, ta_menu_parent.name as parent')
+$menu = DB::table('table')
+    ->fields('table.id, table.name, table_parent.name as parent')
     ->limit(2, 2)
-    ->order('ta_menu.id');
+    ->order('table.id');
 
-$menu->join('ta_menu', 'ta_menu_parent.id', 'ta_menu.parent_id', null, 'ta_menu_parent');
-$menu->where('ta_menu.articul', '', '<>');
+$menu->join('table', 'table_parent.id', 'table.parent_id', null, 'table_parent');
+$menu->where('table.articul', '', '<>');
 $products = $menu->exec();
 ```
 
 #### table($table)
 Установка таблицы
 ```php
-$query = DB::table('ta_menu');
+$query = DB::table('table');
 ```
 #### fields($fields)
 Назначаем поля таблицы
 ```php
-$query->fields('ta_menu.id, ta_menu.articul, ta_menu.name, ta_menu_parent.name as parent');
+$query->fields('table.field1, table.field2');
 ```
-#### <a id="join"></a>join($table, $field1, $field2, $condition = ' = ', $alias = '')[#join]
+#### <a id="join"></a>join($table, $field1, $field2, $condition = ' = ', $alias = '')
 ```php
-$query->join('ta_menu', 'ta_menu_parent.id', 'ta_menu.parent_id', null, 'ta_menu_parent');
+$query->join('table', 'table.id', 'table.parent_id', null, 'table_alias');
 ```
 #### <a id="innerJoin"></a>innerJoin($table, $field1, $field2, $condition = ' = ', $alias = '')
 Аналогичен `join`.
 #### <a id="where"></a>where($field, $value, $condition = ' = ', $combine_condition = 'AND')
 ```php
-$query->where('ta_menu.articul', '', '<>');
+$query->where('table.title', '', '<>');
 ```
 #### <a id="whereRaw"></a>whereRaw($where)
 ```php
